@@ -40,7 +40,10 @@ export const postUser = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export const patchUser = (req: Request, res: Response, next: NextFunction) => {
-  User.findByIdAndUpdate(
+  if (!req.body.name || !req.body.about) {
+    return next(new CustomError('Переданы некорректные данные при обновлении профиля.').setStatus(DATA_ERROR));
+  }
+  return User.findByIdAndUpdate(
     req.user._id,
     { $set: { name: req.body.name, about: req.body.about } },
     { returnDocument: 'after', runValidators: true },
@@ -58,7 +61,10 @@ export const patchUser = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export const patchUserAvatar = (req: Request, res: Response, next: NextFunction) => {
-  User.findByIdAndUpdate(
+  if (!req.body.avatar) {
+    return next(new CustomError('Переданы некорректные данные при обновлении аватара.').setStatus(DATA_ERROR));
+  }
+  return User.findByIdAndUpdate(
     req.user._id,
     { $set: { avatar: req.body.avatar } },
     { returnDocument: 'after', runValidators: true },
