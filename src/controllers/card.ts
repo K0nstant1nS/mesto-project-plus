@@ -1,101 +1,61 @@
+// Я так и не понял, нужно ли нам проверять id пользователя на данном этапе при работе с карточкой
+// А потому пока просто убрал эту проверку. Если верно понял, то на данном этапе мы уже уверенны,
+// что данные пользователя сверены с DB.
+// А если всё же нужна такая проверка - можно её универсально вынести в отдельный middleware
+// с единым текстом ошибки?
 import { NextFunction, Request, Response } from 'express';
 import Card from '../models/card';
-import CustomError from '../classes/error';
-import { DATA_ERROR, NOT_FOUND } from '../utils/constants';
-import User from '../models/user';
+import { configureError } from '../utils';
 
 export const getCards = (req: Request, res: Response, next: NextFunction) => {
   Card.find({}).populate('owner').then((cards) => {
     res.send(cards);
-  }).catch(() => {
-    next(new CustomError());
+  }).catch((e: Error) => {
+    next(configureError(e));
   });
 };
 
 export const postCard = (req: Request, res: Response, next: NextFunction) => {
-  User.findById(req.user._id)
-    .then(() => Card.create({
-      name: req.body.name,
-      link: req.body.link,
-      owner: req.user._id,
-      likes: [],
-    }))
+  Card.create({
+    name: req.body.name,
+    link: req.body.link,
+    owner: req.user._id,
+  })
     .then((card) => {
       res.send(card);
-    }).catch((e: Error) => {
-      if (e.name.startsWith('ValidationError') || e.name.startsWith('CastError')) {
-        next(new CustomError('Переданы некорректные данные при создании карточки.').setStatus(DATA_ERROR));
-      } else {
-        next(new CustomError());
-      }
+    })
+    .catch((e: Error) => {
+      next(configureError(e, { validation: 'Переданы некорректные данные при создании карточки.' }));
     });
 };
 
 export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
   const { cardId } = req.params;
-  Card.findByIdAndRemove(cardId).then((card) => {
-    if (!card) {
-      const error = new Error();
-      error.name = 'CastError';
-      return Promise.reject(error);
-    }
-    return res.send(card);
-  }).catch((e: Error) => {
-    if (e.name.startsWith('CastError')) {
-      next(new CustomError('Карточка с указанным _id не найдена.').setStatus(NOT_FOUND));
-    } else {
-      next(new CustomError());
-    }
-  });
-};
-
-export const putCardLike = (req: Request, res: Response, next: NextFunction) => {
-  const { cardId } = req.params;
-  User.findById(req.user._id)
-    .catch((e: Error) => {
-      if (e.name.startsWith('CastError')) {
-        next(new CustomError('Переданы некорректные данные для постановки лайка.').setStatus(NOT_FOUND));
-      } else {
-        next(new CustomError());
+  Card.findByIdAndRemove(cardId)
+    .orFail()
+    .then((card) => {
+      if (!card) {
+        const error = new Error();
+        error.name = 'CastError';
+        return Promise.reject(error);
       }
-    })
-    .then(() => Card.findByIdAndUpdate(
-      cardId,
-      { $addToSet: { likes: req.user._id } },
-      { returnDocument: 'after' },
-    ))
-    .then((card) => res.send(card))
-    .catch((e: Error) => {
-      if (e.name.startsWith('CastError')) {
-        next(new CustomError('Передан несуществующий _id карточки.').setStatus(DATA_ERROR));
-      } else {
-        next(new CustomError());
-      }
+      return res.send(card);
+    }).catch((e: Error) => {
+      next(configureError(e, { notFound: 'Карточка с указанным _id не найдена.' }));
     });
 };
 
-export const deleteCardLike = (req: Request, res: Response, next: NextFunction) => {
+export const configureLikeRoute = (
+  method: '$pull' | '$addToSet',
+) => (req: Request, res: Response, next: NextFunction) => {
   const { cardId } = req.params;
-
-  User.findById(req.user._id)
-    .catch((e: Error) => {
-      if (e.name.startsWith('CastError')) {
-        next(new CustomError('Переданы некорректные данные для снятия лайка.').setStatus(DATA_ERROR));
-      } else {
-        next(new CustomError());
-      }
-    })
-    .then(() => Card.findByIdAndUpdate(
-      cardId,
-      { $pull: { likes: req.user._id } },
-      { returnDocument: 'after' },
-    ))
+  Card.findByIdAndUpdate(
+    cardId,
+    { [method]: { likes: req.user._id } },
+    { returnDocument: 'after' },
+  ).orFail()
     .then((card) => res.send(card))
     .catch((e: Error) => {
-      if (e.name.startsWith('CastError')) {
-        next(new CustomError('Передан несуществующий _id карточки.').setStatus(DATA_ERROR));
-      } else {
-        next(new CustomError());
-      }
+      next(configureError(e, { notFound: 'Передан несуществующий _id карточки.' }));
     });
 };
