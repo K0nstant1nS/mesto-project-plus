@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import User from '../models/user';
 import { configureError } from '../utils';
+import { userDataIncorrectMessage, userNotFoundMessage } from '../utils/constants';
 
 export const getUsers = (req: Request, res: Response, next: NextFunction) => {
   User.find({}).then((users) => {
@@ -17,7 +18,7 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
     .then((user) => {
       res.send(user);
     }).catch((e: Error) => {
-      next(configureError(e, { notFound: 'Пользователь по указанному _id не найден.' }));
+      next(configureError(e, { notFound: userNotFoundMessage }));
     });
 };
 
@@ -27,14 +28,11 @@ export const postUser = (req: Request, res: Response, next: NextFunction) => {
     .then((user) => {
       res.send(user);
     }).catch((e: Error) => {
-      next(configureError(e, { validation: 'Переданы некорректные данные при создании пользователя.' }));
+      next(configureError(e, { validation: userDataIncorrectMessage }));
     });
 };
 
-// Я верно понял идею с выносом общей логики?
-// В задании у нас сказано отправлять "400 — Переданы некорректные данные при обновлении аватара"
-// И для этого я проверял, что поле avatar имеется в body request(a)
-export const configurePatchUserRoute = (
+const configurePatchUserRoute = (
   validationErrorMessage: string,
 ) => (req: Request, res: Response, next: NextFunction) => {
   User.findByIdAndUpdate(
@@ -45,6 +43,12 @@ export const configurePatchUserRoute = (
     .orFail()
     .then((user) => res.send(user))
     .catch((e: Error) => {
-      next(configureError(e, { notFound: 'Пользователь с указанным _id не найден.', validation: validationErrorMessage }));
+      next(
+        configureError(e, { notFound: userNotFoundMessage, validation: validationErrorMessage }),
+      );
     });
 };
+
+export const updateUserInfo = configurePatchUserRoute('Переданы некорректные данные при обновлении профиля.');
+
+export const updateUserAvatar = configurePatchUserRoute('Переданы некорректные данные при обновлении аватара.');

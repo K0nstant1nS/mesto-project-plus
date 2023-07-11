@@ -17,10 +17,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use('/', baseRouter);
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
-
 /* eslint-disable */
 app.use((err: TCustomError, req: Request, res: Response, next: NextFunction) => {
   const { statusCode, message } = err;
