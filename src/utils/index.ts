@@ -17,8 +17,4 @@ export const configureError = (e: Error, messages?: IMessages) => {
   return new CustomError();
 };
 
-export const updateUserData = () => {
-
-};
-
 export default {};
