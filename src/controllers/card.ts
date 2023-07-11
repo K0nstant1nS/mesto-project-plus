@@ -1,33 +1,34 @@
+import mongoose from 'mongoose';
 import { NextFunction, Request, Response } from 'express';
 import Card from '../models/card';
-import CustomError from '../classes/error';
-import { DATA_ERROR, NOT_FOUND } from '../utils/constants';
 import User from '../models/user';
+import { configureError } from '../utils';
 
 export const getCards = (req: Request, res: Response, next: NextFunction) => {
   Card.find({}).populate('owner').then((cards) => {
     res.send(cards);
-  }).catch(() => {
-    next(new CustomError());
+  }).catch((e: Error) => {
+    next(configureError(e));
   });
 };
 
 export const postCard = (req: Request, res: Response, next: NextFunction) => {
   User.findById(req.user._id)
+    .orFail()
+    .catch(() => {
+      const e = new mongoose.Error.ValidationError();
+      next(configureError(e, { validation: 'Переданы некорректные данные при создании карточки.' }));
+    })
     .then(() => Card.create({
       name: req.body.name,
       link: req.body.link,
       owner: req.user._id,
-      likes: [],
     }))
     .then((card) => {
       res.send(card);
-    }).catch((e: Error) => {
-      if (e.name.startsWith('ValidationError') || e.name.startsWith('CastError')) {
-        next(new CustomError('Переданы некорректные данные при создании карточки.').setStatus(DATA_ERROR));
-      } else {
-        next(new CustomError());
-      }
+    })
+    .catch((e: Error) => {
+      next(configureError(e, { validation: 'Переданы некорректные данные при создании карточки.' }));
     });
 };
 
@@ -41,11 +42,7 @@ export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
     }
     return res.send(card);
   }).catch((e: Error) => {
-    if (e.name.startsWith('CastError')) {
-      next(new CustomError('Карточка с указанным _id не найдена.').setStatus(NOT_FOUND));
-    } else {
-      next(new CustomError());
-    }
+    next(configureError(e, { notFound: 'Карточка с указанным _id не найдена.' }));
   });
 };
 
@@ -53,11 +50,7 @@ export const putCardLike = (req: Request, res: Response, next: NextFunction) => 
   const { cardId } = req.params;
   User.findById(req.user._id)
     .catch((e: Error) => {
-      if (e.name.startsWith('CastError')) {
-        next(new CustomError('Переданы некорректные данные для постановки лайка.').setStatus(NOT_FOUND));
-      } else {
-        next(new CustomError());
-      }
+      configureError(e, { notFound: 'Переданы некорректные данные для постановки лайка.' });
     })
     .then(() => Card.findByIdAndUpdate(
       cardId,
@@ -66,24 +59,15 @@ export const putCardLike = (req: Request, res: Response, next: NextFunction) => 
     ))
     .then((card) => res.send(card))
     .catch((e: Error) => {
-      if (e.name.startsWith('CastError')) {
-        next(new CustomError('Передан несуществующий _id карточки.').setStatus(DATA_ERROR));
-      } else {
-        next(new CustomError());
-      }
+      next(configureError(e, { notFound: 'Передан несуществующий _id карточки.' }));
     });
 };
 
 export const deleteCardLike = (req: Request, res: Response, next: NextFunction) => {
   const { cardId } = req.params;
-
   User.findById(req.user._id)
     .catch((e: Error) => {
-      if (e.name.startsWith('CastError')) {
-        next(new CustomError('Переданы некорректные данные для снятия лайка.').setStatus(DATA_ERROR));
-      } else {
-        next(new CustomError());
-      }
+      next(configureError(e, { notFound: 'Переданы некорректные данные для снятия лайка.' }));
     })
     .then(() => Card.findByIdAndUpdate(
       cardId,
@@ -92,10 +76,6 @@ export const deleteCardLike = (req: Request, res: Response, next: NextFunction) 
     ))
     .then((card) => res.send(card))
     .catch((e: Error) => {
-      if (e.name.startsWith('CastError')) {
-        next(new CustomError('Передан несуществующий _id карточки.').setStatus(DATA_ERROR));
-      } else {
-        next(new CustomError());
-      }
+      next(configureError(e, { notFound: 'Передан несуществующий _id карточки.' }));
     });
 };
