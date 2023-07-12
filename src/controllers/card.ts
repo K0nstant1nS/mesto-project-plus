@@ -1,11 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import Card from '../models/card';
 import { configureError } from '../utils';
-import { DATA_ERROR } from '../utils/constants';
+import { DATA_ERROR, cardNotFoundMessage, castErrorMessage } from '../utils/constants';
 
-const configureLikeRoute = (
-  method: '$pull' | '$addToSet',
-) => (req: Request, res: Response, next: NextFunction) => {
+const configureLikeRoute = (req: Request, res: Response, next: NextFunction, method: '$pull' | '$addToSet') => {
   const { cardId } = req.params;
   Card.findByIdAndUpdate(
     cardId,
@@ -14,12 +12,10 @@ const configureLikeRoute = (
   ).orFail()
     .then((card) => res.send(card))
     .catch((e: Error) => {
-      next(configureError(e, { notFound: 'Передан несуществующий _id карточки.' }));
+      next(configureError(e, { notFound: cardNotFoundMessage, cast: castErrorMessage }));
     });
 };
 
-// Меня понесло и я понаписал ненужного функционала, почти все удалил
-// А тут проверка на владельца карточки при удалении(вместе с ненайденной). Оставлю пока?
 export const checkCardOwner = (req: Request, res: Response, next: NextFunction) => {
   const { cardId } = req.params;
   Card.findById(cardId)
@@ -34,7 +30,7 @@ export const checkCardOwner = (req: Request, res: Response, next: NextFunction) 
       next(
         configureError(
           e,
-          { notFound: 'Карточка с указанным _id не найдена.', custom: { message: 'Ошибка при удалении карточки', code: DATA_ERROR } },
+          { notFound: cardNotFoundMessage, custom: { message: 'Ошибка при удалении карточки', code: DATA_ERROR }, cast: castErrorMessage },
         ),
       );
     });
@@ -67,17 +63,18 @@ export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
   Card.findByIdAndRemove(cardId)
     .orFail()
     .then((card) => {
-      if (!card) {
-        const error = new Error();
-        error.name = 'CastError';
-        return Promise.reject(error);
-      }
-      return res.send(card);
+      res.send(card);
     }).catch((e: Error) => {
-      next(configureError(e, { notFound: 'Карточка с указанным _id не найдена.' }));
+      next(configureError(e));
     });
 };
 
-export const addLike = configureLikeRoute('$addToSet');
+export const addLike = (req: Request, res: Response, next: NextFunction) => {
+  const method = '$addToSet';
+  configureLikeRoute(req, res, next, method);
+};
 
-export const removeLike = configureLikeRoute('$pull');
+export const removeLike = (req: Request, res: Response, next: NextFunction) => {
+  const method = '$pull';
+  configureLikeRoute(req, res, next, method);
+};

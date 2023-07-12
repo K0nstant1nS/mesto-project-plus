@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import User from '../models/user';
+import User, { IUser } from '../models/user';
 import { configureError } from '../utils';
-import { userDataIncorrectMessage, userNotFoundMessage } from '../utils/constants';
+import { castErrorMessage, userDataIncorrectMessage, userNotFoundMessage } from '../utils/constants';
 
 export const getUsers = (req: Request, res: Response, next: NextFunction) => {
   User.find({}).then((users) => {
@@ -18,7 +18,7 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
     .then((user) => {
       res.send(user);
     }).catch((e: Error) => {
-      next(configureError(e, { notFound: userNotFoundMessage }));
+      next(configureError(e, { notFound: userNotFoundMessage, cast: castErrorMessage }));
     });
 };
 
@@ -33,11 +33,15 @@ export const postUser = (req: Request, res: Response, next: NextFunction) => {
 };
 
 const configurePatchUserRoute = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
   validationErrorMessage: string,
-) => (req: Request, res: Response, next: NextFunction) => {
+  data: Partial<IUser>,
+) => {
   User.findByIdAndUpdate(
     req.user._id,
-    { $set: { ...req.body } },
+    { $set: data },
     { returnDocument: 'after', runValidators: true },
   )
     .orFail()
@@ -49,6 +53,14 @@ const configurePatchUserRoute = (
     });
 };
 
-export const updateUserInfo = configurePatchUserRoute('Переданы некорректные данные при обновлении профиля.');
+export const updateUserInfo = (req: Request, res: Response, next: NextFunction) => {
+  const validationErrorMessage = 'Переданы некорректные данные при обновлении профиля.';
+  const { name, about } = req.body;
+  configurePatchUserRoute(req, res, next, validationErrorMessage, { name, about });
+};
 
-export const updateUserAvatar = configurePatchUserRoute('Переданы некорректные данные при обновлении аватара.');
+export const updateUserAvatar = (req: Request, res: Response, next: NextFunction) => {
+  const validationErrorMessage = 'Переданы некорректные данные при обновлении аватара.';
+  const { avatar } = req.body;
+  configurePatchUserRoute(req, res, next, validationErrorMessage, { avatar });
+};

@@ -1,7 +1,7 @@
-import { DEFAULT_ERROR } from '../utils/constants';
+import { DATA_ERROR, DEFAULT_ERROR, NOT_FOUND } from '../utils/constants';
 
-/* eslint-disable */export type TCustomError = Error & { statusCode: number, setStatus: (code: number) => TCustomError };
-/* eslint-enable */
+export type TCustomError = Error & { statusCode: number };
+
 export default class CustomError extends Error implements TCustomError {
   statusCode: number;
 
@@ -10,8 +10,18 @@ export default class CustomError extends Error implements TCustomError {
     this.statusCode = DEFAULT_ERROR;
   }
 
-  setStatus = (code: number) => {
-    this.statusCode = code;
+  setNotFoundCode = () => {
+    this.statusCode = NOT_FOUND;
+    return this;
+  };
+
+  setValidationCode = () => {
+    this.statusCode = DATA_ERROR;
+    return this;
+  };
+
+  setCustomCode = (statusCode: number) => {
+    this.statusCode = statusCode;
     return this;
   };
 }
