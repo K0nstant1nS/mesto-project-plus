@@ -11,15 +11,11 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.user = {
-    _id: '64ad03441b15792fb99a100b',
+    _id: '64ae5ff9a2436446bea17989',
   };
   next();
 });
 app.use('/', baseRouter);
-
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
 
 /* eslint-disable */
 app.use((err: TCustomError, req: Request, res: Response, next: NextFunction) => {
