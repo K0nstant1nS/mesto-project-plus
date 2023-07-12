@@ -23,7 +23,7 @@ export const configureError = (e: Error, messages?: IMessages) => {
     return new CustomError(messages.validation).setValidationCode();
   }
   if (messages && e instanceof mongoose.Error.CastError) {
-    return new CustomError(messages.cast).setNotFoundCode();
+    return new CustomError(messages.cast).setValidationCode();
   }
   if (messages && messages.custom) {
     return new CustomError(messages.custom.message).setCustomCode(messages.custom.code);
