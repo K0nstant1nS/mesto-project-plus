@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import Card from '../models/card';
 import { configureError } from '../utils';
-import { DATA_ERROR, cardNotFoundMessage, castErrorMessage } from '../utils/constants';
+import { FORBIDDEN_ERROR, cardNotFoundMessage, castErrorMessage } from '../utils/constants';
 
 const configureLikeRoute = (req: Request, res: Response, next: NextFunction, method: '$pull' | '$addToSet') => {
   const { cardId } = req.params;
@@ -30,7 +30,7 @@ export const checkCardOwner = (req: Request, res: Response, next: NextFunction) 
       next(
         configureError(
           e,
-          { notFound: cardNotFoundMessage, custom: { message: 'Ошибка при удалении карточки', code: DATA_ERROR }, cast: castErrorMessage },
+          { notFound: cardNotFoundMessage, custom: { message: 'Ошибка при удалении карточки', code: FORBIDDEN_ERROR }, cast: castErrorMessage },
         ),
       );
     });

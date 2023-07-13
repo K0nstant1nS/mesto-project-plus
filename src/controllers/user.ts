@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jws from 'jsonwebtoken';
 import { NextFunction, Request, Response } from 'express';
@@ -111,12 +112,17 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const user = await User.findOne({ email }).select('+password').orFail();
     const isMatched = await bcrypt.compare(password, user.password);
     if (!isMatched) {
-      throw new Error();
+      throw new mongoose.Error.DocumentNotFoundError('');
     }
     const token = jws.sign({ _id: user._id }, secretKey, { expiresIn: '7d' });
     res.cookie('token', token, { httpOnly: true });
+    // В задании не прописано что возвращаем если токен в куках. Так что просто сообщение
     res.send({ message: 'успешный логин' });
   } catch (e) {
-    next(configureError(e as Error));
+    if (e instanceof mongoose.Error.DocumentNotFoundError) {
+      next(new CustomError('Неправильный логин или пароль').setUnauthorizedCode());
+    } else {
+      next(configureError(e as Error));
+    }
   }
 };
