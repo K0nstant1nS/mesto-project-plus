@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import { linkRegExp } from '../utils/constants';
 
 interface ICard {
   name: string,
@@ -18,6 +19,9 @@ const cardSchema = new Schema<ICard>({
   link: {
     type: String,
     required: true,
+    validate: {
+      validator: (url: string) => linkRegExp.test(url),
+    },
   },
   owner: {
     type: Schema.Types.ObjectId,

@@ -31,4 +31,12 @@ export const configureError = (e: Error, messages?: IMessages) => {
   return new CustomError();
 };
 
+export const getCookie = (cookie: string, name: string): string | undefined => {
+  const matches = cookie.match(
+    // eslint-disable-next-line
+    new RegExp(`(?:^|; )${name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1')}=([^;]*)`),
+  );
+  return matches ? decodeURIComponent(matches[1]) : undefined;
+};
+
 export default {};
