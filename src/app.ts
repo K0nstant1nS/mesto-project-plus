@@ -1,7 +1,9 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import mongoose from 'mongoose';
 import baseRouter from './routes/index';
-import { TCustomError } from './classes/error';
+import { login, postUser } from './controllers/user';
+import auth from './middlewares/auth';
+import error from './middlewares/error';
 
 const app = express();
 mongoose.connect('mongodb://localhost:27017/mestodb');
@@ -9,19 +11,13 @@ mongoose.connect('mongodb://localhost:27017/mestodb');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  req.user = {
-    _id: '64ae5ff9a2436446bea17989',
-  };
-  next();
-});
+app.post('/signin', login);
+app.post('/signup', postUser);
+
+app.use(auth);
+
 app.use('/', baseRouter);
 
-/* eslint-disable */
-app.use((err: TCustomError, req: Request, res: Response, next: NextFunction) => {
-  const { statusCode, message } = err;
-  res.status(statusCode).send({ message });
-});
-/* eslint-enable */
+app.use(error);
 
 app.listen(3000);

@@ -1,4 +1,6 @@
-import { DATA_ERROR, DEFAULT_ERROR, NOT_FOUND } from '../utils/constants';
+import {
+  AUTH_ERROR, CONFLICT_ERROR, DATA_ERROR, DEFAULT_ERROR, NOT_FOUND_ERROR,
+} from '../utils/constants';
 
 export type TCustomError = Error & { statusCode: number };
 
@@ -11,7 +13,7 @@ export default class CustomError extends Error implements TCustomError {
   }
 
   setNotFoundCode = () => {
-    this.statusCode = NOT_FOUND;
+    this.statusCode = NOT_FOUND_ERROR;
     return this;
   };
 
@@ -20,8 +22,18 @@ export default class CustomError extends Error implements TCustomError {
     return this;
   };
 
+  setUnauthorizedCode = () => {
+    this.statusCode = AUTH_ERROR;
+    return this;
+  };
+
   setCustomCode = (statusCode: number) => {
     this.statusCode = statusCode;
+    return this;
+  };
+
+  setConflictCode = () => {
+    this.statusCode = CONFLICT_ERROR;
     return this;
   };
 }
