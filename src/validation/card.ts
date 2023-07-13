@@ -7,8 +7,6 @@ export const getCardValidator = celebrate({
   }),
 });
 
-// Вроде в задании нет ничего про валидацию поля link, но я решил, что логично
-// добавить её, раз уж avatar валидируем.
 export const postCardValidatot = celebrate({
   [Segments.BODY]: Joi.object({
     name: Joi.string().min(2).max(30).required(),

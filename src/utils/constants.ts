@@ -11,6 +11,8 @@ export const userDataIncorrectMessage = 'Переданы некорректны
 export const authorizationErrorMessage = 'Ошибка при попытке авторизации';
 export const castErrorMessage = 'Передан невалидный id';
 export const cardNotFoundMessage = 'Карточка с указанным _id не найдена.';
+export const noTokenMessage = 'Не удаётся получить токен';
+export const tokenCheckErrorMessage = 'Ошибка при проверке токена';
 
 export const secretKey = 'secret key';
 

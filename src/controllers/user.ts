@@ -59,22 +59,6 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
     });
 };
 
-/* export const postUser = (req: Request, res: Response, next: NextFunction) => {
-  const {
-    name, about, avatar, email, password,
-  } = req.body;
-  bcrypt.hash(password, 10)
-    .then((hash) => User.create({
-      name, about, avatar, email, password: hash,
-    }))
-    .then((user) => {
-      res.send(user);
-    }).catch((e) => {
-      console.log(e.code);
-      next(configureError(e, { validation: userDataIncorrectMessage }));
-    });
-}; */
-
 export const postUser = async (req: Request, res: Response, next: NextFunction) => {
   const {
     name, about, avatar, email, password,
@@ -106,6 +90,8 @@ export const updateUserAvatar = (req: Request, res: Response, next: NextFunction
   configurePatchUserRoute(req, res, next, validationErrorMessage, { avatar });
 };
 
+// Посмотрел на цепочку из вызовов then и решил писать в формате try/catch.
+// Если нужно могу весь код в такой формат переоформить.
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
