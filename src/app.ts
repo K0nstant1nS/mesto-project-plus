@@ -14,6 +14,9 @@ mongoose.connect('mongodb://localhost:27017/mestodb');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+// Благодарю за парсер. В связи с тем, что проет без @types/express не запустился
+// имеется вопросик. А можно как-то при запуске проекта отключить подтягивание модулей из
+// глобальной node_modules?
 app.use(cookieParser());
 
 app.use(requestLogger);
