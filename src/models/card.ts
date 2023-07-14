@@ -21,6 +21,7 @@ const cardSchema = new Schema<ICard>({
     required: true,
     validate: {
       validator: (url: string) => linkRegExp.test(url),
+      message: 'Некорректный формат ссылки',
     },
   },
   owner: {

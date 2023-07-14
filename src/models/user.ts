@@ -28,6 +28,7 @@ const userSchema = new Schema<IUser>({
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
       validator: (url: string) => linkRegExp.test(url),
+      message: 'Некорректный формат ссылки на аватар',
     },
   },
   email: {
@@ -37,6 +38,7 @@ const userSchema = new Schema<IUser>({
     index: true,
     validate: {
       validator: (value: string) => psEmail(value),
+      message: 'Некорректный формат email',
     },
   },
   password: {

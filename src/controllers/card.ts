@@ -1,39 +1,34 @@
 import { NextFunction, Request, Response } from 'express';
 import Card from '../models/card';
 import { configureError } from '../utils';
-import { FORBIDDEN_ERROR, cardNotFoundMessage, castErrorMessage } from '../utils/constants';
+import { cardNotFoundMessage, castErrorMessage } from '../utils/constants';
+import CustomError from '../classes/error';
 
-const configureLikeRoute = (req: Request, res: Response, next: NextFunction, method: '$pull' | '$addToSet') => {
-  const { cardId } = req.params;
-  Card.findByIdAndUpdate(
-    cardId,
-    { [method]: { likes: req.user._id } },
-    { returnDocument: 'after' },
-  ).orFail()
-    .then((card) => res.send(card))
-    .catch((e: Error) => {
-      next(configureError(e, { notFound: cardNotFoundMessage, cast: castErrorMessage }));
-    });
+const configureLikeRoute = async (req: Request, res: Response, next: NextFunction, method: '$pull' | '$addToSet') => {
+  try {
+    const { cardId } = req.params;
+    const card = await Card.findByIdAndUpdate(
+      cardId,
+      { [method]: { likes: req.user._id } },
+      { returnDocument: 'after' },
+    ).orFail();
+    res.send(card);
+  } catch (e) {
+    next(configureError(e as Error, { notFound: cardNotFoundMessage, cast: castErrorMessage }));
+  }
 };
 
-export const checkCardOwner = (req: Request, res: Response, next: NextFunction) => {
-  const { cardId } = req.params;
-  Card.findById(cardId)
-    .orFail()
-    .then((card) => {
-      if (String(card.owner) === req.user._id) {
-        return next();
-      }
-      throw new Error();
-    })
-    .catch((e) => {
-      next(
-        configureError(
-          e,
-          { notFound: cardNotFoundMessage, custom: { message: 'Ошибка при удалении карточки', code: FORBIDDEN_ERROR }, cast: castErrorMessage },
-        ),
-      );
-    });
+export const checkCardOwner = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { cardId } = req.params;
+    const card = await Card.findById(cardId).orFail();
+    if (String(card.owner) !== req.user._id) {
+      return next(CustomError.ConflictError('Ошибка при удалении карточки'));
+    }
+    next();
+  } catch (e) {
+    configureError(e as Error, { notFound: cardNotFoundMessage, cast: castErrorMessage });
+  }
 };
 
 export const getCards = (req: Request, res: Response, next: NextFunction) => {

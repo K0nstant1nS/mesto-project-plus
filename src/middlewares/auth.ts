@@ -1,30 +1,23 @@
 import { NextFunction, Request, Response } from 'express';
-import jws from 'jsonwebtoken';
-import { getCookie } from '../utils';
+import jws, { JsonWebTokenError } from 'jsonwebtoken';
+import { configureError } from '../utils';
 import CustomError from '../classes/error';
 import { noTokenMessage, secretKey, tokenCheckErrorMessage } from '../utils/constants';
 
 const auth = (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.headers.cookie) {
-      throw new CustomError(noTokenMessage).setUnauthorizedCode();
-    }
-    const token = getCookie(req.headers.cookie, 'token');
+    const { token } = req.cookies;
     if (!token) {
-      throw new CustomError(noTokenMessage).setUnauthorizedCode();
+      return next(CustomError.UnauthorizedError(noTokenMessage));
     }
-    const data = jws.verify(token, secretKey);
-    if (typeof data !== 'string' && data._id) {
-      req.user = { _id: data._id };
-    } else {
-      throw new CustomError(tokenCheckErrorMessage).setUnauthorizedCode();
-    }
+    const data = jws.verify(token, secretKey) as { _id: string };
+    req.user = { _id: data._id };
     next();
   } catch (e) {
-    if (e instanceof CustomError) {
-      next(e as Error);
+    if (e instanceof JsonWebTokenError) {
+      next(CustomError.UnauthorizedError(tokenCheckErrorMessage));
     } else {
-      next(new CustomError(tokenCheckErrorMessage).setUnauthorizedCode());
+      next(configureError(e as Error));
     }
   }
 };

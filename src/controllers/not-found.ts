@@ -1,10 +1,8 @@
-import mongoose from 'mongoose';
 import { NextFunction, Request, Response } from 'express';
-import { configureError } from '../utils';
+import CustomError from '../classes/error';
 
 export const errorRouter = (req: Request, res: Response, next: NextFunction) => {
-  const error = new mongoose.Error.DocumentNotFoundError('');
-  next(configureError(error, { notFound: 'Страница не найдена' }));
+  next(CustomError.NotFoundError('Страница не найдена'));
 };
 
 export default {};
