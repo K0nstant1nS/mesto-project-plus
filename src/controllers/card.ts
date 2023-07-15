@@ -23,11 +23,11 @@ export const checkCardOwner = async (req: Request, res: Response, next: NextFunc
     const { cardId } = req.params;
     const card = await Card.findById(cardId).orFail();
     if (String(card.owner) !== req.user._id) {
-      return next(CustomError.ConflictError('Ошибка при удалении карточки'));
+      return next(CustomError.ForbiddentError('Нет прав на удаление этой карточки'));
     }
     next();
   } catch (e) {
-    configureError(e as Error, { notFound: cardNotFoundMessage, cast: castErrorMessage });
+    next(configureError(e as Error, { notFound: cardNotFoundMessage, cast: castErrorMessage }));
   }
 };
 

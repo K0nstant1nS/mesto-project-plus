@@ -44,8 +44,17 @@ const userSchema = new Schema<IUser>({
   password: {
     type: String,
     required: true,
-    select: false,
   },
 }, { versionKey: false });
+
+// Удобно. Получается это более универсальный select, если требуется ограничить пользователя от
+// каких-то данных?
+userSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    // eslint-disable-next-line no-param-reassign
+    delete ret.password;
+    return ret;
+  },
+});
 
 export default model<IUser>('user', userSchema);

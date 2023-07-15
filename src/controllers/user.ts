@@ -59,8 +59,7 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
     });
 };
 
-// В 1-ой части мы обрабатывали ошибку валидации при создании юзера, теперь за это
-// отвечает celebrate. Есть смысл ссохранять эту проверку в контроллере?
+// Т.е. от обработки ошибок валидации и  CastError можно избавляться?
 export const postUser = async (req: Request, res: Response, next: NextFunction) => {
   const {
     name, about, avatar, email, password,
@@ -92,12 +91,10 @@ export const updateUserAvatar = (req: Request, res: Response, next: NextFunction
   configurePatchUserRoute(req, res, next, validationErrorMessage, { avatar });
 };
 
-// Посмотрел на цепочку из вызовов then и решил писать в формате try/catch.
-// Если нужно могу весь код в такой формат переоформить.
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password').orFail();
+    const user = await User.findOne({ email }).orFail();
     const isMatched = await bcrypt.compare(password, user.password);
     if (!isMatched) {
       return next(CustomError.UnauthorizedError('Неправильный логин или пароль'));

@@ -4,7 +4,6 @@ import {
 
 export type TCustomError = Error & { statusCode: number };
 
-// А вот такой формат задания ошибок приемлем? Дабы не дублировать кучу классов.
 export default class CustomError extends Error implements TCustomError {
   statusCode: number;
 
