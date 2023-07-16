@@ -47,8 +47,6 @@ const userSchema = new Schema<IUser>({
   },
 }, { versionKey: false });
 
-// Удобно. Получается это более универсальный select, если требуется ограничить пользователя от
-// каких-то данных?
 userSchema.set('toJSON', {
   transform: (doc, ret) => {
     // eslint-disable-next-line no-param-reassign

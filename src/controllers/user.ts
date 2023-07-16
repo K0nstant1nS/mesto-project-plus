@@ -59,7 +59,6 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
     });
 };
 
-// Т.е. от обработки ошибок валидации и  CastError можно избавляться?
 export const postUser = async (req: Request, res: Response, next: NextFunction) => {
   const {
     name, about, avatar, email, password,
