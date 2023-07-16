@@ -51,6 +51,8 @@
       {
         "devDependencies": true
       }
-    ]
+    ],
+    "linebreak-style": 0,
+    "consistent-return": "off"
   }
 }

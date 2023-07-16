@@ -41,10 +41,10 @@ export const getUsers = (req: Request, res: Response, next: NextFunction) => {
 export const getMe = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { _id } = req.user;
-    const user = await User.findById(_id);
+    const user = await User.findById(_id).orFail();
     res.send(user);
   } catch (e) {
-    next(configureError(e as Error));
+    next(configureError(e as Error, { notFound: userNotFoundMessage, cast: castErrorMessage }));
   }
 };
 
@@ -71,7 +71,7 @@ export const postUser = async (req: Request, res: Response, next: NextFunction) 
     res.send(user);
   } catch (e: any) {
     if (e.code === 11000) {
-      next(new CustomError('Пользователь с таким email уже существует').setConflictCode());
+      next(CustomError.ConflictError('Пользователь с таким email уже существует'));
     } else {
       next(configureError(e, { validation: userDataIncorrectMessage }));
     }
@@ -90,23 +90,20 @@ export const updateUserAvatar = (req: Request, res: Response, next: NextFunction
   configurePatchUserRoute(req, res, next, validationErrorMessage, { avatar });
 };
 
-// Посмотрел на цепочку из вызовов then и решил писать в формате try/catch.
-// Если нужно могу весь код в такой формат переоформить.
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password').orFail();
+    const user = await User.findOne({ email }).orFail();
     const isMatched = await bcrypt.compare(password, user.password);
     if (!isMatched) {
-      throw new mongoose.Error.DocumentNotFoundError('');
+      return next(CustomError.UnauthorizedError('Неправильный логин или пароль'));
     }
     const token = jws.sign({ _id: user._id }, secretKey, { expiresIn: '7d' });
     res.cookie('token', token, { httpOnly: true });
-    // В задании не прописано что возвращаем если токен в куках. Так что просто сообщение
     res.send({ message: 'успешный логин' });
   } catch (e) {
     if (e instanceof mongoose.Error.DocumentNotFoundError) {
-      next(new CustomError('Неправильный логин или пароль').setUnauthorizedCode());
+      next(CustomError.UnauthorizedError('Неправильный логин или пароль'));
     } else {
       next(configureError(e as Error));
     }

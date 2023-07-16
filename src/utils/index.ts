@@ -11,32 +11,27 @@ interface IMessages {
   }
 }
 
-// Я понимаю причину возникновения ошибки, но не понимаю для чего её отдельно от
-// DocumentNotFoundError отлавливать. У нас в задании нет отдельного прописанного сценария для
-// CastError. Потому я и объединил её с DocumentNotFoundError.
-// Если я снова что-то сделал не так, то уже совершенно не понимаю что требует правки.
-export const configureError = (e: Error, messages?: IMessages) => {
-  if (messages && e instanceof mongoose.Error.DocumentNotFoundError) {
-    return new CustomError(messages.notFound).setNotFoundCode();
-  }
-  if (messages && e instanceof mongoose.Error.ValidationError) {
-    return new CustomError(messages.validation).setValidationCode();
-  }
-  if (messages && e instanceof mongoose.Error.CastError) {
-    return new CustomError(messages.cast).setValidationCode();
-  }
-  if (messages && messages.custom) {
-    return new CustomError(messages.custom.message).setCustomCode(messages.custom.code);
-  }
-  return new CustomError();
+const defaultMessages = {
+  notFound: 'Документ не найден',
+  validation: 'Ошибка валидации',
+  cast: 'Неверный фармат id',
 };
 
-export const getCookie = (cookie: string, name: string): string | undefined => {
-  const matches = cookie.match(
-    // eslint-disable-next-line
-    new RegExp(`(?:^|; )${name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1')}=([^;]*)`),
-  );
-  return matches ? decodeURIComponent(matches[1]) : undefined;
+export const configureError = (e: Error, messages: IMessages = {}) => {
+  messages = { ...defaultMessages, ...messages }; // eslint-disable-line no-param-reassign
+  if (messages.notFound && e instanceof mongoose.Error.DocumentNotFoundError) {
+    return CustomError.NotFoundError(messages.notFound);
+  }
+  if (messages.validation && e instanceof mongoose.Error.ValidationError) {
+    return CustomError.ValidationError(messages.validation);
+  }
+  if (messages.cast && e instanceof mongoose.Error.CastError) {
+    return CustomError.ValidationError(messages.cast);
+  }
+  if (messages.custom) {
+    return new CustomError(messages.custom.message, messages.custom.code);
+  }
+  return new CustomError();
 };
 
 export default {};
