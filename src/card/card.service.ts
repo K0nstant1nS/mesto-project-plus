@@ -1,8 +1,12 @@
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Request } from 'express';
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable, HttpException, NotFoundException, HttpStatus,
+  BadRequestException, ForbiddenException, ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Card } from './card.schema';
+import catchError from '../utils/error-catcher';
 
 @Injectable()
 
@@ -13,7 +17,10 @@ export class CardService {
     const { _id } = req.user;
     const { cardId } = req.params;
     const card = await this.cardModel.findById(cardId).orFail();
-    return _id === String(card.owner);
+    if (_id !== String(card.owner)) {
+      throw new ForbiddenException();
+    }
+    return true;
   }
 
   private async configureLikeAction(req: Request, method: '$pull' | '$addToSet') {
@@ -22,16 +29,16 @@ export class CardService {
       const card = this.cardModel.findByIdAndUpdate(cardId, { [method]: { likes: req.user._id } }, { returnDocument: 'after' }).orFail();
       return card;
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   }
 
   async getCards() {
     try {
-      const cards = await this.cardModel.find({}).orFail();
+      const cards = await this.cardModel.find({}).orFail().populate('likes');
       return cards;
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   }
 
@@ -41,20 +48,18 @@ export class CardService {
       const card = await this.cardModel.create({ ...body, owner: user._id });
       return card;
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   }
 
   async removeCard(req: Request) {
     const { cardId } = req.params;
     try {
-      if (await this.checkCardOwner(req)) {
-        const card = this.cardModel.findByIdAndRemove(cardId).orFail();
-        return card;
-      }
-      throw new Error();
+      await this.checkCardOwner(req);
+      const card = this.cardModel.findByIdAndRemove(cardId).orFail().populate('likes');
+      return card;
     } catch (e) {
-      console.log(e);
+      catchError(e);
     }
   }
 
