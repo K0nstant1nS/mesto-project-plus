@@ -1,8 +1,9 @@
 import {
-  Controller, Get, Post, Req, Delete, Put,
+  Controller, Get, Post, Req, Delete, Put, Body,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { CardService } from './card.service';
+import { PostCardDto } from './dto/create-card.dto';
 
 @Controller('cards')
 export class CardController {
@@ -14,8 +15,8 @@ export class CardController {
   }
 
   @Post()
-  postCard(@Req() req: Request) {
-    return this.cardService.postCard(req);
+  postCard(@Req() req: Request, @Body() body: PostCardDto) {
+    return this.cardService.postCard(req, body);
   }
 
   @Delete(':cardId')

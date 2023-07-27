@@ -7,6 +7,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Card } from './card.schema';
 import catchError from '../utils/error-catcher';
+import { PostCardDto } from './dto/create-card.dto';
 
 @Injectable()
 
@@ -42,8 +43,8 @@ export class CardService {
     }
   }
 
-  async postCard(req: Request) {
-    const { body, user } = req;
+  async postCard(req: Request, body: PostCardDto) {
+    const { user } = req;
     try {
       const card = await this.cardModel.create({ ...body, owner: user._id });
       return card;
