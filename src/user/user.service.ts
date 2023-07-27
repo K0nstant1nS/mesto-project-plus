@@ -8,19 +8,20 @@ import { sign } from 'jsonwebtoken';
 import { hash, compare } from 'bcrypt';
 import { secretKey } from '../utils/constants';
 import { User } from './user.schema';
-import {
-  ILoginUser, IPatchAvatar, IPatchUser, IPostUser,
-} from './user.types';
 import catchError from '../utils/error-catcher';
+import { PostUserDto } from './dto/create-user.dto';
+import { PatchAvatarDto } from './dto/patch-avatar.dto';
+import { PatchUserDto } from './dto/patch-user.dto';
+import { LoginUserDto } from './dto/login.dto';
 
 @Injectable()
 
 export class UserService {
   constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
 
-  private async configurePatchUserRoute(req: Request) {
+  private async configurePatchUserRoute(req: Request, body: PatchAvatarDto|PatchUserDto) {
     try {
-      const user = await this.userModel.findByIdAndUpdate(req.user._id, { $set: req.body }, { returnDocument: 'after', runValidators: true }).orFail();
+      const user = await this.userModel.findByIdAndUpdate(req.user._id, { $set: body }, { returnDocument: 'after', runValidators: true }).orFail();
       return user;
     } catch (e) {
       catchError(e);
@@ -54,7 +55,7 @@ export class UserService {
     }
   }
 
-  async setUser(body: IPostUser) {
+  async setUser(body: PostUserDto) {
     try {
       const password = await hash(body.password, 10);
       const user = await this.userModel.create({ ...body, password });
@@ -64,11 +65,11 @@ export class UserService {
     }
   }
 
-  async patchInfo(req: Request) {
-    return this.configurePatchUserRoute(req);
+  async patchInfo(req: Request, body: PatchAvatarDto|PatchUserDto) {
+    return this.configurePatchUserRoute(req, body);
   }
 
-  async login(body: ILoginUser, response: Response) {
+  async login(body: LoginUserDto, response: Response) {
     try {
       const { email, password } = body;
       const user = await this.userModel.findOne({ email }).orFail();
