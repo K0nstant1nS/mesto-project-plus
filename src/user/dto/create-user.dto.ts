@@ -12,15 +12,15 @@ export class PostUserDto {
 
   @IsString()
   @Length(2, 30)
-    name: string;
+    name: string = 'Жак иф Кусто';
 
   @IsString()
   @Length(2, 200)
-    about: string;
+    about: string = 'Исследователь';
 
   @IsString()
   @IsUrl()
-    avatar: string;
+    avatar: string = 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png';
 }
 
 export default {};

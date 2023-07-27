@@ -73,7 +73,7 @@ export class UserService {
     try {
       const { email, password } = body;
       const user = await this.userModel.findOne({ email }).orFail();
-      const isMatched = compare(user.password, password);
+      const isMatched = await compare(password, user.password);
       if (!isMatched) {
         throw new UnauthorizedException('Непарвильный email или пароль');
       }
